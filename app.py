@@ -1292,7 +1292,7 @@ with col_exp:
 
     # Only auto-save if we haven't saved this specific result yet
     if st.session_state.get("last_saved_result_id") != id(result):
-        save_dir = Path(r"e:\Research_pprs\AI_MODELS\results\REsults_FAST")
+        save_dir = Path(__file__).resolve().parent / "results" / "generated"
         save_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

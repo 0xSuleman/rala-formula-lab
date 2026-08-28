@@ -91,7 +91,7 @@ if __name__ == "__main__":
     tiers = [
         ("Scale Tiny (Streamlit baseline)", 64, 4, 2, 2, 4),
         ("Scale Medium (Research level)", 128, 4, 6, 4, 4),
-        ("Scale High (95%+ Target Model)", 256, 8, 12, 4, 4),
+        ("Scale High", 256, 8, 12, 4, 4),
         ("Scale Extreme (Industrial Stress-Test)", 512, 8, 24, 4, 4),
     ]
     
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     for i, s in enumerate(stats_list):
         kv_ratio = s.kv_rank_ratio if s.kv_rank_ratio is not None else 0.0
         out_ratio = s.output_rank_ratio if s.output_rank_ratio is not None else 0.0
-        status = "PERFECT 1.000 ✅" if out_ratio >= 0.999 else "COLLAPSED ⚠️"
+        status = "full in this pass" if out_ratio >= 0.999 else "below full rank"
         print(f"  Layer {i:<2} | {kv_ratio:<15.3f} | {out_ratio:<18.3f} | {status:<20}")
         
     # ─────────────────────────────────────────────────────────────────────────
@@ -184,26 +184,30 @@ if __name__ == "__main__":
     # ─────────────────────────────────────────────────────────────────────────
     # WRITING THE capacity_analysis.md ARTIFACT
     # ─────────────────────────────────────────────────────────────────────────
-    results_dir = Path(__file__).parent / "results"
+    results_dir = Path(__file__).resolve().parents[1] / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
     capacity_file = results_dir / "CAPACITY_ANALYSIS.md"
 
     
-    markdown_content = f"""# 🧠 Architecture Scaling & Capacity Analysis: "Taking the Pain"
+    markdown_content = f"""# Architecture scaling and capacity analysis
 
-This analysis documents the theoretical limits, structural scaling characteristics, and numerical stability of the **Self-Gated State Space Hybrid Attention** model when subjected to massive parameter scaling.
+This report records a synthetic forward/backward stress test for the hybrid
+attention implementation. It validates shape compatibility, gradient flow, and
+basic numerical sanity. It does not establish task accuracy, convergence,
+production readiness, or superiority over a baseline.
 
 ---
 
 ## 🚀 Model Tier Specifications & Capacity Sizing
 
-We profiled four architectural scales ranging from the local prototype to production-grade industrial capacities. All parameters are fully trainable and calculated using vision embedding layers:
+Parameter counts were measured for four configurations using the same vision
+embedding and classifier implementation:
 
 | Scale Tier | Dimension ($D$) | Heads ($h$) | Layers ($L$) | MLP Ratio | Trainable Parameters | Image Sequences ($32\\times 32$) |
 |---|---|---|---|---|---|---|
 | **Scale Tiny** (Prototype) | 64 | 4 | 2 | 2 | {format_params(profiled_models[0][5])} | 64 tokens |
 | **Scale Medium** (Research Baseline) | 128 | 4 | 6 | 4 | {format_params(profiled_models[1][5])} | 64 tokens |
-| **Scale High** (95%+ Target) | 256 | 8 | 12 | 4 | {format_params(profiled_models[2][5])} | 64 tokens |
+| **Scale High** | 256 | 8 | 12 | 4 | {format_params(profiled_models[2][5])} | 64 tokens |
 | **Scale Extreme** (Industrial Stress) | 512 | 8 | 24 | 4 | {format_params(profiled_models[3][5])} | 64 tokens |
 
 ---
@@ -218,8 +222,10 @@ We executed an active forward and backward pass on the **Scale High** model (~{f
 - **Logit Shape:** `[2, 10]` matching CIFAR-10 batch requirements without coordinate shifting.
 - **Numerical Sanity:** NaNs: `False` | Infs: `False`. Gating projections scale smoothly and prevent explosive exponential divergence.
 
-### 2. Proof of Rank Preservation ($\phi$-gate)
-Even under the "pain" of 12 full layers, where the global associative memory compression ($KV$) fluctuates naturally due to feature abstraction, the residual output gate $\phi(x) = 1 + \\tanh(W_\\phi x + b_\\phi)$ keeps output rank perfectly saturated:
+### 2. Rank diagnostics
+The measured output rank remained high in this one synthetic pass. This is an
+observation, not proof that the output gate causes better rank or accuracy; a
+matched ablation and multiple seeds are required for that claim.
 
 | Layer | KV Rank Ratio | Output Rank Ratio | Preservation Status |
 |---|---|---|---|
@@ -228,35 +234,22 @@ Even under the "pain" of 12 full layers, where the global associative memory com
     for i, s in enumerate(stats_list):
         kv_r = f"{s.kv_rank_ratio:.3f}" if s.kv_rank_ratio is not None else "n/a"
         out_r = f"{s.output_rank_ratio:.3f}" if s.output_rank_ratio is not None else "n/a"
-        status = "PERFECT 1.000 ✅" if s.output_rank_ratio is not None and s.output_rank_ratio >= 0.999 else "COLLAPSED ⚠️"
+        status = "full in this pass" if s.output_rank_ratio is not None and s.output_rank_ratio >= 0.999 else "below full rank"
         markdown_content += f"| Layer {i} | {kv_r} | {out_r} | {status} |\n"
         
     markdown_content += """
 ---
 
-## 📈 Optimal 95%+ Accuracy Training Formulation
+## What remains unverified
 
-To train this architecture to maximum validation performance (95%+) on CIFAR-10, the following schedule is mathematically required to bypass training plateaus:
+- Training convergence at the high and extreme configurations.
+- Multi-seed accuracy and uncertainty intervals.
+- Causal contribution of the salience, global-memory, and output gates.
+- Memory use and throughput under controlled hardware benchmarking.
+- Comparison with parameter-matched Softmax and linear-attention baselines.
 
-### 1. The Cosine Warmup Formulation
-```python
-def get_lr_multiplier(epoch, total_epochs=200, warmup_epochs=5):
-    if epoch < warmup_epochs:
-        # Linear warmup to prevent early gradient shock in deep layers
-        return 0.1 + 0.9 * (epoch / warmup_epochs)
-    else:
-        # Cosine decay down to 1% of peak LR for beautiful fine tuning
-        progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-        return 0.5 * (1.0 + np.cos(np.pi * progress))
-```
-
-### 2. Regularization Setup for "Scale High"
-Because a **4.1M parameter model** can easily memorize 50,000 CIFAR-10 samples:
-1. **Weight Decay:** Set to `0.05` in `AdamW` to decay inactive features.
-2. **Data Augmentation:** Apply `RandAugment(num_ops=2, magnitude=9)` and `Cutout` to prevent absolute memorization.
-3. **Dropout:** Keep attention dropout and MLP dropout at `0.1`.
-
-This stress test proves that **mathematically and structurally, the Hybrid Attention code is 100% ready for extreme scaling.**
+The next useful experiment is a preregistered, multi-seed ablation rather than
+another untracked scale increase.
 """
     
     with open(capacity_file, "w") as f:
@@ -264,5 +257,5 @@ This stress test proves that **mathematically and structurally, the Hybrid Atten
         
     print_section("CAPACITY REPORT GENERATED")
     print(f"  Saved full scaling report to: {capacity_file}")
-    print("  This model is fully capable of taking the pain of extreme production scaling.")
+    print("  Report records implementation checks and explicit unverified claims.")
     print("═" * 70 + "\n")

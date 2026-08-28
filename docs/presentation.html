@@ -680,7 +680,7 @@
                 <td>1.30M</td>
             </tr>
             <tr>
-                <td><strong>Scale High</strong> (95%+ Target)</td>
+                <td><strong>Scale High</strong> (Stress Test)</td>
                 <td>256</td>
                 <td>8</td>
                 <td>12</td>
@@ -688,7 +688,7 @@
                 <td style="color:var(--accent-blue); font-weight:bold;">10.31M</td>
             </tr>
             <tr>
-                <td><strong>Scale Extreme</strong> (Industrial)</td>
+                <td><strong>Scale Extreme</strong> (Untrained)</td>
                 <td>512</td>
                 <td>8</td>
                 <td>24</td>
@@ -708,39 +708,40 @@
         
         <h3>1. Shape Integrity & Speeds</h3>
         <ul>
-            <li><strong>Forward Pass:</strong> Succeeded instantly (220.6ms on CPU).</li>
-            <li><strong>Backward Pass (Gradients):</strong> Succeeded instantly (171.0ms on CPU).</li>
+            <li><strong>Forward Pass:</strong> Completed in 220.6ms on the recorded CPU environment.</li>
+            <li><strong>Backward Pass (Gradients):</strong> Completed in 171.0ms on the recorded CPU environment.</li>
             <li><strong>Numerical Sanity:</strong> NaNs = <span class="status-success">False</span> | Infs = <span class="status-success">False</span>.</li>
         </ul>
-        <p>The gating projections scale smoothly. The convex combinations in the global memory successfully prevented any explosive exponential divergence.</p>
+        <p>This is a structural smoke test, not an accuracy or production-readiness result. The recorded pass showed no NaN or infinite values.</p>
         <div class="slide-number">Slide 17</div>
     </div>
 
     <!-- Slide 18 -->
     <div class="slide">
         <div class="section-tag">Part 4: Scaling & Capacity Validation</div>
-        <h1>Proof of Rank Preservation</h1>
-        <p>The ultimate test of the $\phi$-gate is tracking the Singular Value Decomposition (SVD) rank ratio layer by layer. If the ratio drops below 1.0, the feature spa        <table>
+        <h1>Observed Rank Diagnostics</h1>
+        <p>The stress test tracks SVD rank ratios layer by layer. These values describe one synthetic pass and do not isolate the causal effect of the output gate.</p>
+        <table>
             <tr>
                 <th>Depth</th>
                 <th>Global KV Rank Ratio</th>
                 <th>Final Output Rank Ratio</th>
                 <th>Preservation Status</th>
             </tr>
-            <tr><td>Layer 0</td><td>0.994</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 1</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 2</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 3</td><td>0.998</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 4</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 5</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 6</td><td>0.998</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 7</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 8</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 9</td><td>0.998</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 10</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
-            <tr><td>Layer 11</td><td>1.000</td><td><strong>1.000</strong></td><td class="status-success">PERFECT ✅</td></tr>
+            <tr><td>Layer 0</td><td>0.994</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 1</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 2</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 3</td><td>0.998</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 4</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 5</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 6</td><td>0.998</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 7</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 8</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 9</td><td>0.998</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 10</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
+            <tr><td>Layer 11</td><td>1.000</td><td><strong>1.000</strong></td><td>Full in this pass</td></tr>
         </table>
-        <p>Even under the stress of 12 full layers, where the global memory compression fluctuates naturally, the $\phi$-gate maintains absolute geometric saturation across <strong>every single layer</strong>. The architecture mathematically prevents rank collapse.</p>
+        <p>Output rank remained full in this pass. A parameter-matched, multi-seed gate ablation is required before attributing that observation to $\phi$ or claiming an accuracy benefit.</p>
         <div class="slide-number">Slide 18</div>
     </div>
 
@@ -756,7 +757,7 @@
             <tr><td><strong>training.py</strong></td><td>560+</td><td>Training loop, checkpoint save/load, fine-tuning (continue training), and evaluate-only mode for loaded models.</td></tr>
             <tr><td><strong>app.py</strong></td><td>350</td><td>Interactive Streamlit web dashboard with Train / Fine-tune / Evaluate modes, real-time loss/accuracy charts, and per-layer SVD rank diagnostics.</td></tr>
         </table>
-        <p>All parameters are configurable from laptop scale ($D=64$) to data center scale ($D=8192$). Both parallel (training) and recurrent (streaming) modes produce correct outputs with verified full rank.</p>
+        <p>The repository includes configurable parallel and recurrent modes. Automated tests cover shapes, formula safety, rank tolerances, and key gate switches; larger configurations still require controlled training and systems evaluation.</p>
         <div class="slide-number">Slide 18b</div>
     </div>
 
@@ -764,33 +765,33 @@
     <div class="slide">
         <div class="section-tag">Part 4: Scaling & Capacity Validation</div>
         <h1>Initial Benchmark Results</h1>
-        <p>Benchmarks on Synthetic dataset (1200 samples, 15 epochs, $D=64$, $h=4$, $L=2$):</p>
+        <p>Matched single-seed CIFAR-10 comparison: 10,000 samples, 30 epochs, $D=64$, $h=4$, $L=2$, patch size 4.</p>
         <table>
-            <tr><th>Model</th><th>Train Acc</th><th>Val Acc</th><th>Output Rank Ratio</th></tr>
+            <tr><th>Model</th><th>Best Val</th><th>Final Val</th><th>Recorded Inference</th></tr>
             <tr>
-                <td><strong>Hybrid (ours)</strong></td>
-                <td><strong>96.8%</strong></td>
-                <td style="color:var(--success); font-weight:bold;">96.3%</td>
-                <td class="status-success">1.000 (full rank)</td>
+                <td><strong>Hybrid</strong></td>
+                <td><strong>52.70%</strong></td>
+                <td>51.95%</td>
+                <td>1333.04ms</td>
             </tr>
             <tr>
-                <td>Softmax (standard)</td>
-                <td>95.5%</td>
-                <td>91.3%</td>
-                <td class="status-warning">0.865–0.947 (degraded)</td>
+                <td>Softmax</td>
+                <td style="color:var(--success); font-weight:bold;">53.75%</td>
+                <td>52.50%</td>
+                <td>636.46ms</td>
             </tr>
             <tr>
-                <td>RALA (linear)</td>
-                <td>94.6%</td>
-                <td>85.8%</td>
-                <td class="status-success">1.000</td>
+                <td>Linear</td>
+                <td>51.80%</td>
+                <td>51.80%</td>
+                <td>661.72ms</td>
             </tr>
         </table>
-        <p><strong>Key findings:</strong></p>
+        <p><strong>Interpretation:</strong></p>
         <ul>
-            <li><strong>Rank Restoration Confirmed:</strong> Output rank ratio = 1.000 across all layers in every test.</li>
-            <li><strong>Generalization Advantage:</strong> +5.0% val accuracy over Softmax and +10.5% over RALA.</li>
-            <li><strong>Gradient Flow Verified:</strong> All 175 parameter groups received nonzero, healthy gradients.</li>
+            <li>Hybrid finished 1.05 percentage points below the best Softmax checkpoint.</li>
+            <li>Hybrid finished 0.90 points above the best linear-attention checkpoint.</li>
+            <li>One seed is insufficient for a superiority claim; timings are not a controlled benchmark.</li>
         </ul>
         <div class="slide-number">Slide 18c</div>
     </div>
@@ -809,7 +810,7 @@
         </table>
         <div class="analogy-box">
             <h4>Analogy: Studying for an Exam</h4>
-            <p><strong>Training accuracy</strong> = your score on practice problems you've already done. <strong>Validation accuracy</strong> = your score on the real exam with new questions. If you score 95% on practice but 40% on the exam, you memorized the answer key, not the subject. Our model with $D=64$ hitting 42% train and 42% val on CIFAR-10 is <em>exactly where a 100K parameter model should be</em>. The architecture is not the limitation — the capacity is.</p>
+            <p><strong>Training accuracy</strong> = your score on practice problems you've already done. <strong>Validation accuracy</strong> = your score on new questions. A large gap signals memorization. It does not, by itself, identify whether capacity, optimization, data, or architecture is the cause.</p>
         </div>
         <div class="slide-number">Slide 18d</div>
     </div>
@@ -817,8 +818,8 @@
     <!-- Slide 19 -->
     <div class="slide">
         <div class="section-tag">Part 4: Scaling & Capacity Validation</div>
-        <h1>Optimal 95%+ Accuracy Training Formulation</h1>
-        <p>With the architecture mathematically sound and structurally stable, reaching state-of-the-art validation accuracy (e.g., >95% on CIFAR-10) is purely a matter of optimal optimization and regularization.</p>
+        <h1>Next Controlled Training Study</h1>
+        <p>The current artifacts do not establish state-of-the-art performance. The next study should test optimization and regularization choices under parameter-matched, multi-seed controls.</p>
         
         <h3>1. The Cosine Warmup Schedule</h3>
         <p>Linear warmup prevents early gradient shock to deep layers. Cosine decay allows for beautiful fine-tuning at the end of training.</p>
@@ -830,8 +831,8 @@
             &nbsp;&nbsp;&nbsp;&nbsp;return 0.5 * (1.0 + np.cos(np.pi * progress))
         </div>
 
-        <h3>2. Extreme Regularization</h3>
-        <p>A 10M parameter model will easily memorize small datasets. To force genuine generalization:</p>
+        <h3>2. Candidate Regularization</h3>
+        <p>These are hypotheses to test, not guaranteed accuracy recipes:</p>
         <ul>
             <li><strong>Weight Decay:</strong> $0.05$ in AdamW optimizer.</li>
             <li><strong>Data Augmentation:</strong> RandAugment (magnitude 9) + Cutout.</li>

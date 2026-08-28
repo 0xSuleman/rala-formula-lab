@@ -49,7 +49,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .metrics import AttentionStats, DEFAULT_RANK_TOL
+from .metrics import AttentionStats, DEFAULT_RANK_TOL, compute_deferred_stats
 
 # ── FlashAttention v2 availability check ──────────────────────────────
 # We try to import at module level so the cost is paid once. If flash-attn
@@ -255,10 +255,10 @@ class HybridAttention(nn.Module):
         output = self.out_proj(y)
 
         # ── Collect statistics if requested ────────────────────────────
-        # NOTE: SVD rank computation is NOT done here. Instead, we stash
-        # the raw tensors into stats._raw_tensors. The actual SVD work is
-        # performed by compute_deferred_stats() AFTER the inference timer
-        # has stopped, so that inference_ms reflects pure model speed.
+        # Training measures inference with a separate collect_stats=False
+        # pass. The public collect_stats=True API therefore returns complete
+        # diagnostics immediately instead of exposing an internal deferred
+        # state to direct callers.
         stats = AttentionStats()
         if collect_stats:
             with torch.no_grad():
@@ -276,6 +276,7 @@ class HybridAttention(nn.Module):
                         "combined_output": y.detach(),
                     },
                 }
+                compute_deferred_stats(stats, rank_tol=rank_tol)
 
         return HybridAttentionResult(output=output, stats=stats)
 

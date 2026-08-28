@@ -19,7 +19,6 @@ from .metrics import (
     AttentionStats,
     accuracy,
     aggregate_stats_batches,
-    compute_deferred_stats,
     merge_layer_stats,
     timed,
 )
@@ -256,7 +255,7 @@ def _evaluate(
                     torch.cuda.synchronize()
             inference_ms = timer.elapsed_ms
 
-        # ── Normal forward pass (with optional stats stashing) ─────
+        # ── Normal forward pass (with optional rank diagnostics) ───
         logits, stats_list = model(
             images,
             collect_stats=should_collect,
@@ -271,9 +270,6 @@ def _evaluate(
 
         # Fix #1: keep per-layer stats from each collected batch
         if should_collect and stats_list:
-            # Compute deferred SVD ranks OUTSIDE the timer.
-            for s in stats_list:
-                compute_deferred_stats(s, rank_tol=rank_tol)
             tagged = merge_layer_stats(stats_list)
             all_batch_stats.append(tagged)
 
@@ -484,9 +480,6 @@ def _evaluate_text(
         total_loss += loss.item() * inputs.size(0)
 
         if should_collect and stats_list:
-            # Compute deferred SVD ranks OUTSIDE the timer.
-            for s in stats_list:
-                compute_deferred_stats(s, rank_tol=rank_tol)
             tagged = merge_layer_stats(stats_list)
             all_batch_stats.append(tagged)
 

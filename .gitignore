@@ -5,3 +5,8 @@ checkpoints/
 data/
 *.pyc
 .git_backup
+.coverage
+htmlcov/
+*.egg-info/
+results/generated/*.json
+!results/generated/.gitkeep

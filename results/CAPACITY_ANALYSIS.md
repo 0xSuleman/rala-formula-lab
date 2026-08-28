@@ -1,72 +1,62 @@
-# 🧠 Architecture Scaling & Capacity Analysis: "Taking the Pain"
+# Architecture scaling and capacity analysis
 
-This analysis documents the theoretical limits, structural scaling characteristics, and numerical stability of the **Self-Gated State Space Hybrid Attention** model when subjected to massive parameter scaling.
+This artifact records a synthetic forward/backward stress test for the hybrid
+attention implementation. It validates shape compatibility, gradient flow, and
+basic numerical sanity. It does not establish task accuracy, convergence,
+production readiness, or superiority over a baseline.
 
----
+## Model configurations
 
-## 🚀 Model Tier Specifications & Capacity Sizing
+| Configuration | Dimension | Heads | Layers | MLP ratio | Parameters | Tokens |
+|---|---:|---:|---:|---:|---:|---:|
+| Tiny | 64 | 4 | 2 | 2 | 83.3K | 64 |
+| Medium | 128 | 4 | 6 | 4 | 1.30M | 64 |
+| High | 256 | 8 | 12 | 4 | 10.31M | 64 |
+| Extreme | 512 | 8 | 24 | 4 | 82.07M | 64 |
 
-We profiled four architectural scales ranging from the local prototype to production-grade industrial capacities. All parameters are fully trainable and calculated using vision embedding layers:
+## Recorded high-configuration smoke test
 
-| Scale Tier | Dimension ($D$) | Heads ($h$) | Layers ($L$) | MLP Ratio | Trainable Parameters | Image Sequences ($32\times 32$) |
-|---|---|---|---|---|---|---|
-| **Scale Tiny** (Prototype) | 64 | 4 | 2 | 2 | 83.3K | 64 tokens |
-| **Scale Medium** (Research Baseline) | 128 | 4 | 6 | 4 | 1.30M | 64 tokens |
-| **Scale High** (95%+ Target) | 256 | 8 | 12 | 4 | 10.31M | 64 tokens |
-| **Scale Extreme** (Industrial Stress) | 512 | 8 | 24 | 4 | 82.07M | 64 tokens |
+- Synthetic input: two 32×32 RGB tensors.
+- Logit shape: `[2, 10]`.
+- Forward pass: 220.6 ms on the recorded CPU environment.
+- Backward pass: 171.0 ms on the recorded CPU environment.
+- Observed NaNs: false.
+- Observed infinities: false.
 
----
+The timings above are environment-specific smoke-test measurements and are not
+a systems benchmark.
 
-## ⚡ Active Stress-Test Validation (Scale High Tier)
+## Rank diagnostics
 
-We executed an active forward and backward pass on the **Scale High** model (~10.31M parameters) with synthetic $32\times 32$ CIFAR-10 images. 
+| Layer | Memory rank ratio | Output rank ratio |
+|---:|---:|---:|
+| 0 | 0.994 | 1.000 |
+| 1 | 1.000 | 1.000 |
+| 2 | 1.000 | 1.000 |
+| 3 | 0.998 | 1.000 |
+| 4 | 1.000 | 1.000 |
+| 5 | 1.000 | 1.000 |
+| 6 | 0.998 | 1.000 |
+| 7 | 1.000 | 1.000 |
+| 8 | 1.000 | 1.000 |
+| 9 | 0.998 | 1.000 |
+| 10 | 1.000 | 1.000 |
+| 11 | 1.000 | 1.000 |
 
-### 1. Shape Integrity & Computational Speeds
-- **Forward Pass:** Succeeded in **220.6ms** (CPU).
-- **Backward Pass (Gradient Flow):** Succeeded in **171.0ms** (CPU).
-- **Logit Shape:** `[2, 10]` matching CIFAR-10 batch requirements without coordinate shifting.
-- **Numerical Sanity:** NaNs: `False` | Infs: `False`. Gating projections scale smoothly and prevent explosive exponential divergence.
+The output rank remained full in this single synthetic pass. A matched
+multi-seed ablation is required before attributing the result to any gate or
+claiming an accuracy benefit.
 
-### 2. Rank Diagnostics
-Even under the "pain" of 12 full layers, the measured attention output stayed full rank. This indicates no observed rank collapse in this stress test, but it is a diagnostic observation rather than causal proof that the $\phi$ gate improves accuracy, memory, or reasoning.
+## What remains unverified
 
-| Layer | Memory Rank Ratio | Output Rank Ratio | Preservation Status |
-|---|---|---|---|
-| Layer 0 | 0.994 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 1 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 2 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 3 | 0.998 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 4 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 5 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 6 | 0.998 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 7 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 8 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 9 | 0.998 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 10 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
-| Layer 11 | 1.000 | 1.000 | PERFECT 1.000 ✅ |
+- Training convergence at the high and extreme configurations.
+- Multi-seed accuracy and uncertainty intervals.
+- Causal contribution of salience, global-memory, and output gates.
+- Memory use and throughput under controlled hardware benchmarking.
+- Parameter-matched comparison with Softmax and linear attention.
 
----
+Reproduce the structural test with:
 
-## 📈 Optimal 95%+ Accuracy Training Formulation
-
-To train this architecture to maximum validation performance (95%+) on CIFAR-10, the following schedule is mathematically required to bypass training plateaus:
-
-### 1. The Cosine Warmup Formulation
-```python
-def get_lr_multiplier(epoch, total_epochs=200, warmup_epochs=5):
-    if epoch < warmup_epochs:
-        # Linear warmup to prevent early gradient shock in deep layers
-        return 0.1 + 0.9 * (epoch / warmup_epochs)
-    else:
-        # Cosine decay down to 1% of peak LR for beautiful fine tuning
-        progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-        return 0.5 * (1.0 + np.cos(np.pi * progress))
+```bash
+python scripts/stress_test.py
 ```
-
-### 2. Regularization Setup for "Scale High"
-Because a **4.1M parameter model** can easily memorize 50,000 CIFAR-10 samples:
-1. **Weight Decay:** Set to `0.05` in `AdamW` to decay inactive features.
-2. **Data Augmentation:** Apply `RandAugment(num_ops=2, magnitude=9)` and `Cutout` to prevent absolute memorization.
-3. **Dropout:** Keep attention dropout and MLP dropout at `0.1`.
-
-This stress test proves that **mathematically and structurally, the Hybrid Attention code is 100% ready for extreme scaling.**
