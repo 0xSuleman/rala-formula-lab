@@ -405,7 +405,7 @@ add_info_box(doc, 'TIP', 'Run experiments in order. EXP 1 and EXP 2 are the most
 # ── Save ────────────────────────────────────────────────────────────
 import os
 from pathlib import Path
-outpath = Path(__file__).parent / 'Experiment_Runbook.docx'
+outpath = Path(__file__).resolve().parents[1] / 'docs' / 'experiment-runbook.docx'
 doc.save(outpath)
 print(f'✅ Document saved to: {outpath}')
 

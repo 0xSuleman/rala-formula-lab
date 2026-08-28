@@ -3,3 +3,7 @@ torch>=2.3
 torchvision>=0.18
 numpy>=1.26
 pandas>=2.2
+plotly>=5.22
+matplotlib>=3.8
+pytest>=8.2
+python-docx>=1.1

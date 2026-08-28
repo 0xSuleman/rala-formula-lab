@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this research workbench, please cite it as below."
+title: "RALA Formula Lab"
+type: software
+authors:
+  - family-names: Ahmed
+    given-names: Suleman
+repository-code: "https://github.com/0xSuleman/rala-formula-lab"
+url: "https://github.com/0xSuleman/rala-formula-lab"
+license: MIT
+version: 0.1.0
+date-released: 2026-08-28
+keywords:
+  - linear attention
+  - rank augmented linear attention
+  - pytorch
+  - reproducible research
