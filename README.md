@@ -3,10 +3,16 @@
 [![CI](https://github.com/0xSuleman/rala-formula-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/0xSuleman/rala-formula-lab/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-16a34a)](LICENSE)
+[![Streamlit](https://img.shields.io/badge/demo-Streamlit%20Community%20Cloud-ff4b4b)](https://streamlit.io/cloud)
 
 A reproducible PyTorch workbench for studying rank-augmented linear attention,
 hybrid local/global attention, safe kernel formulas, and rank diagnostics on
 controlled vision and associative-recall tasks.
+
+This repository is the standalone **RALA Formula Lab**. It is intentionally
+separate from the broader `AI_MODELS` workspace. Use **Sample mode** in the
+sidebar for an instant cached view; it reads committed results and does not
+download data or train models.
 
 This is an independent research prototype inspired by *Breaking the Low-Rank
 Dilemma of Linear Attention*. It is not the authors' official implementation
@@ -137,6 +143,12 @@ Run the dashboard:
 streamlit run app.py
 ```
 
+For Streamlit Community Cloud, create a new app from this repository, branch
+`main`, and entrypoint `app.py`. The root `requirements.txt` and
+`.streamlit/config.toml` are included for the hosted environment. See the
+[deployment guide](docs/STREAMLIT_DEPLOYMENT.md) and
+[official Streamlit documentation](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy).
+
 Run the verification suite and rebuild result artifacts:
 
 ```bash
@@ -169,13 +181,12 @@ Before making a comparative claim:
 
 | Artifact | Purpose |
 |---|---|
-| [Research report](docs/rala-formula-lab-report.pdf) | Original project report |
 | [Experiment runbook](docs/experiment-runbook.docx) | Planned ablations and run protocol |
 | [Model formulation](docs/model-formulation.html) | Interactive architecture explanation |
 | [Presentation](docs/presentation.html) | Browser-based project walkthrough |
 | [Experiment worksheet](docs/experiment-worksheet.html) | Editable research notebook template |
 | [Capacity analysis](results/CAPACITY_ANALYSIS.md) | Structural scale smoke test and its limits |
-| [Reference material](docs/references/README.md) | Upstream papers and citations |
+| [Reference material](docs/references/README.md) | Upstream papers and citations (linked, not copied) |
 
 ## Limitations and next experiment
 
@@ -205,4 +216,4 @@ Ahmed. See [CITATION.cff](CITATION.cff) for software citation metadata.
 ## License
 
 Code in this repository is available under the [MIT License](LICENSE). External
-papers in `docs/references/` remain under their publishers' and authors' terms.
+papers are cited by link only and are not redistributed by this repository.

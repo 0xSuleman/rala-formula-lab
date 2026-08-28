@@ -1,7 +1,7 @@
 # External references
 
-The PDFs in this directory are reference copies, not original work from this
-repository. Rights remain with their authors and publishers.
+Reference PDFs are intentionally not redistributed. Use the official links
+below to access the papers; rights remain with their authors and publishers.
 
 1. Qihang Fan, Huaibo Huang, and Ran He. “Breaking the Low-Rank Dilemma of
    Linear Attention.” CVPR 2025, pp. 25271–25280.

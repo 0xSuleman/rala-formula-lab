@@ -2,7 +2,7 @@
 
 | File | Description | Ownership |
 |---|---|---|
-| `rala-formula-lab-report.pdf` | Project research report | Project artifact |
+| External research report | Project context | Cite or link the source; the copied PDF is not redistributed |
 | `experiment-runbook.docx` | Planned experiment matrix and protocol | Project artifact |
 | `model-formulation.html` | Interactive architecture/formula explanation | Project artifact |
 | `presentation.html` | Browser-based presentation | Project artifact |

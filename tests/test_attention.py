@@ -158,3 +158,26 @@ def test_hybrid_recurrent_reports_final_memory_rank():
     assert result.stats.memory_rank_ratio is not None
     assert result.stats.global_output_rank is not None
     assert result.stats.output_rank is not None
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"use_global": False},
+        {"window_size": 0},
+        {"is_causal": True},
+        {"mode": "recurrent", "use_salience_gate": False},
+    ],
+)
+def test_hybrid_diagnostic_regressions_are_finite(kwargs):
+    """Regression coverage for the four formerly failing hybrid diagnostics."""
+    torch.manual_seed(11)
+    x = torch.randn(2, 8, 16)
+    params = {"dim": 16, "heads": 4, "window_size": 4, "dropout": 0.0}
+    params.update(kwargs)
+    attn = HybridAttention(**params)
+    result = attn(x, collect_stats=True)
+    assert result.output.shape == x.shape
+    assert torch.isfinite(result.output).all()
+    assert result.stats.output_rank is not None
+    assert not result.stats.warnings

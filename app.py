@@ -235,6 +235,25 @@ def _summary_table(result: ExperimentResult) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["Metric", "Value"]).astype(str)
 
 
+def _render_cached_demo() -> None:
+    """Show committed evidence without downloading data or training a model."""
+    st.title("RALA Formula Lab — sample mode")
+    st.info("Cached sample mode is read-only: it uses committed result artifacts and performs no model training.")
+    summary_path = Path(__file__).resolve().parent / "results" / "summary.csv"
+    sample = pd.read_csv(summary_path)
+    sample = sample[sample["artifact"].str.contains("matched-baselines", na=False)].copy()
+    sample["variant"] = sample["variant"].str.title()
+    st.subheader("Committed matched CIFAR-10 sample")
+    st.dataframe(
+        sample[["variant", "best_val_accuracy_pct", "best_epoch", "final_val_accuracy_pct", "inference_ms_recorded"]],
+        hide_index=True,
+        use_container_width=True,
+    )
+    chart = sample.set_index("variant")[["best_val_accuracy_pct", "final_val_accuracy_pct"]]
+    st.bar_chart(chart)
+    st.caption("These are single-seed research diagnostics, not a superiority claim. Switch off Sample mode to configure a new experiment.")
+
+
 # ── Parameter estimator ───────────────────────────────────────────────────────
 
 def _estimate_params(task: str, vocab_size: int, dim: int, heads: int, layers: int, patch_size: int, mlp_ratio: int) -> int:
@@ -599,6 +618,12 @@ with st.sidebar:
     else:
         task_id = "recall"
 
+    sample_mode = st.toggle(
+        "Sample mode (no training)",
+        value=True,
+        help="Show committed results immediately. Turn this off to run an experiment locally.",
+    )
+
     # ── Run Mode ──────────────────────────────────────────────────────────
     _section("Run Mode")
     run_mode = st.radio(
@@ -639,6 +664,7 @@ with st.sidebar:
                 format_func=lambda i: ckpt_names[i],
                 label_visibility="collapsed",
             )
+
             selected_ckpt = saved_checkpoints[selected_ckpt_idx]
             _render_checkpoint_card(selected_ckpt)
             
@@ -866,6 +892,9 @@ with st.sidebar:
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  MAIN CONTENT
+if sample_mode:
+    _render_cached_demo()
+    st.stop()
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── Page header ───────────────────────────────────────────────────────────────
